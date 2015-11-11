@@ -1,12 +1,10 @@
-'use strict';
-
 var World = function() {};
 
 World.prototype.init = function() {
 
 	this.renderer = this.init_renderer();
 
-	this.render_stats;
+	//this.render_stats;
 	this.init_stats();
 
 	this.scene = this.init_scene();
@@ -22,16 +20,13 @@ World.prototype.init = function() {
 
 	this.controls = new THREE.TrackballControls( this.camera, this.renderer.domElement );
 	this.controls.rotateSpeed = 1.0;
-	this.controls.zoomSpeed = .6;
+	this.controls.zoomSpeed = 0.6;
 	this.controls.panSpeed = 2;
 	this.controls.noZoom = false;
 	this.controls.noPan = false;
 	this.controls.staticMoving = false;
 	this.controls.dynamicDampingFactor = 0.3;
 	this.controls.target = new THREE.Vector3(0, 0, 0);
-
-
-
 
 	this.octree = new THREE.Octree({
 	    radius: 1, // optional, default = 1, octree will grow and shrink as needed
@@ -41,9 +36,9 @@ World.prototype.init = function() {
 	    scene: null// optional, pass scene as parameter only if you wish to visualize octree
 	} );
 
-	this.obstacles;
+//	this.obstacles;
 
-	this.flock = new Flock(this.scene, this.octree, this.obstacles, 100);
+	this.flock = new Flock(this.scene, this.octree, this.obstacles, nodes);
 
 	this.last_time = new Date();
 
@@ -61,7 +56,7 @@ World.prototype.init = function() {
 
 	this.draw_octree = function() {
 		this.octree.scene = this.scene;
-	}
+	};
 	var octree_control = this.gui.add(this, 'draw_octree');
 
 	this.separation = 1;
@@ -174,19 +169,19 @@ World.prototype.init_camera = function() {
 	this.scene.add(camera);
 
 	return camera;
-}
+};
 
 World.prototype.init_lights = function() {
 	var lights = [];
 	// Light
 	var d_light = new THREE.DirectionalLight( 0xFFFFFF );
 	d_light.position.set( 300, 200, 300 );
-	d_light.intensity = .7;
+	d_light.intensity = 0.7;
 	d_light.target.position.set(0, 0, 0);
 	d_light.castShadow = true;
-	d_light.shadowBias = -.0001
+	d_light.shadowBias = -0.0001;
 	d_light.shadowMapWidth = d_light.shadowMapHeight = 2048;
-	d_light.shadowDarkness = .7;
+	d_light.shadowDarkness = 0.7;
 	
 	lights.push(d_light);
 
@@ -194,8 +189,8 @@ World.prototype.init_lights = function() {
 	s_light.position.set( 0, 400, 200 );
 	s_light.target.position.copy( this.scene.position );
 	s_light.castShadow = true;
-	s_light.intensity = .8;
-	s_light.shadowDarkness = .7;
+	s_light.intensity = 0.8;
+	s_light.shadowDarkness = 0.7;
 
 	lights.push(s_light);
 
@@ -211,16 +206,16 @@ World.prototype.handle_keys = function() {
 		this.render_stats.domElement.hidden = false;
 	}
 	if (this.keyboard.pressed("a")) {
-		this.camera_rotation += .05;
+		this.camera_rotation += 0.05;
 	}
 	if (this.keyboard.pressed("d")) {
-		this.camera_rotation -= .05;
+		this.camera_rotation -= 0.05;
 	}
 	if (this.keyboard.pressed("w")) {
-		this.camera_radius -= .5;
+		this.camera_radius -= 0.5;
 	}
 	if (this.keyboard.pressed("s")) {
-		this.camera_radius += .5;
+		this.camera_radius += 0.5;
 	}
 
 };
@@ -248,6 +243,46 @@ World.prototype.render = function() {
 	requestAnimationFrame( this.render.bind(this) );
 };
 
+// Parse
+Parse.initialize("xa0SQKjqG0GNFMiaAoprMRrPyVVkIfMGMmBHhsKw", "fqrWimXMv1DAmVhh7YuOogp77xhINze5aKrLC8u8");
+
+// Fetch data from parse
+var nodes = [];
+function fetchNodes() {
+  // Load Parse Data
+  var PNode = Parse.Object.extend('Node'); 
+  var query = new Parse.Query(PNode);
+  query.find({
+    
+    success: function(results) {
+      console.log('successfully retrieved ' + results.length + ' items');
+      for (var i = 0; i < results.length; i++) {
+	var object = results[i];
+	var n = object.get('name');
+	
+	if (n.length === 0) {
+	  n = 'anon';
+	}
+	var e = object.get('emotion');
+	var l = object.get('location');
+	nodes.push(object);
+      }
+      // After all nodes have loaded, init scene
+      console.log(nodes);
+      initWorld(); 
+    },
+    error: function(error) {
+      alert('error: ' + error.code + ' ' + error.message);
+    }
+  });
+}
+fetchNodes();
 
 var world = new World();
-window.addEventListener("load", world.init.bind(world));
+// We can lose reference to the original object,
+// so using bind allows us to know that 'this' refers to the specific object we want
+// in this case 'world'
+var initWorld = world.init.bind(world);
+//window.addEventListener("load", world.init.bind(world));
+
+//window.addEventListener("load", world.init());

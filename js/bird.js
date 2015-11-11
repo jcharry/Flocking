@@ -1,101 +1,157 @@
-var Bird = function(scene, octree, obstacles, velocity_hash, position, orientation) {
-	this.scene = scene;
-	this.octree = octree;
-	this.obstacles = obstacles;
-	this.velocity_hash = velocity_hash;
-	this.line;
-	this.sphere;
-	this.mesh;
-	this.init_mesh(position, orientation);
-	this.separation_size = 1;
-	this.acceleration = new THREE.Vector3(0, 0, 0);
-	this.min_speed = 4;
-	this.max_speed = 10;
-	this.max_delta = .01;
-	this.area_size = 5;
-	this.velocity = new THREE.Vector3(this.min_speed*Math.cos(this.mesh.rotation.y), 0, this.min_speed*Math.sin(this.mesh.rotation.y));
+var Bird = function(scene, octree, obstacles, velocity_hash, position, orientation, name, emotion, location) {
+  this.name = name;
+  this.emotion = emotion;
+  this.location = location;
+  this.scene = scene;
+  this.octree = octree;
+  this.obstacles = obstacles;
+  this.velocity_hash = velocity_hash;
+  //this.line;
+  //this.sphere;
+  //this.mesh;
+  this.init_mesh(position, orientation);
+  this.separation_size = 1;
+  this.acceleration = new THREE.Vector3(0, 0, 0);
+  this.min_speed = 4;
+  this.max_speed = 10;
+  this.max_delta = 0.01;
+  this.area_size = 5;
+  this.velocity = new THREE.Vector3(this.min_speed*Math.cos(this.mesh.rotation.y), 0, this.min_speed*Math.sin(this.mesh.rotation.y));
 
-	this.separation_gain = 1;
-	this.cohesion_gain = 1;
-	this.alignment_gain = 1;
+  this.separation_gain = 1;
+  this.cohesion_gain = 1;
+  this.alignment_gain = 1;
 
-	this.max_climb = 1;
+  this.max_climb = 1;
 
-	this.bound_strength = 1;
-}
-
-Bird.prototype.init_mesh = function(position, orientation) {
-	var geometry = new BirdObject();
-	var material =  new THREE.MeshBasicMaterial( { color:Math.random() * 0xffffff, side: THREE.DoubleSide } )
-	geometry.dynamic = true;
-	var mesh = new THREE.Mesh(geometry, material);
-	mesh.phase = Math.floor( Math.random() * 62.83 );
-
-
-	var rot_mat = new THREE.Matrix4();
-	// rot_mat.setRotationFromEuler(new THREE.Vector3(0, 0, -Math.PI/2));//rotate on X 90 degrees
-	// geometry.applyMatrix(rot_mat);
-
-	// mesh.scale = 1;
-	mesh.scale = new THREE.Vector3(.1, .1, .1);
-	mesh.position = position;
-	mesh.rotation = orientation;
-	this.mesh = mesh;
-	this.scene.add(this.mesh);
-	this.octree.add(this.mesh);
-
-	var line_material = new THREE.LineBasicMaterial({
-        color: 0x999999
-    });
-
-    var line_geometry = new THREE.Geometry();
-    line_geometry.dynamic = true;
-    line_geometry.vertices.push(new THREE.Vector3(0, 0, 0));
-    line_geometry.vertices.push(new THREE.Vector3(0, 0, 0));
-
-    this.line = new THREE.Line(line_geometry, line_material);
-    // this.scene.add(this.line);
-
-    var sphere_material = new THREE.MeshBasicMaterial({
-    	color: 0xaaaaaa,
-        wireframe: true
-    });
-
-    var sphere_geometry = new THREE.SphereGeometry(3, 8, 8);
-
-    this.sphere = new THREE.Mesh(sphere_geometry, sphere_material);
-
-    // this.scene.add(this.sphere);
-
+  this.bound_strength = 1;
+  this.getCategory();
+  console.log(this.category);
 };
 
-Bird.prototype.apply_limit = function(vector, min, max) {
-	if (vector.length() > max) {
-		vector.normalize();
-		vector.multiplyScalar(max);
-	}
-	
-	if (vector.length() < min) {
-		vector.normalize();
-		vector.multiplyScalar(min);
-	}
+Bird.prototype.getCategory = function() {
+  
+  // set category
+  switch (this.emotion) {
+    case 'Serenity':
+    case 'Joy':
+    case 'Ecstacy':
+      this.category = 'joy';
+      break;
+    case 'Admiration':
+    case 'Trust':
+    case 'Acceptance':
+      this.category = 'trust';
+      break;
+    case 'Terror':
+    case 'Fear':
+    case 'Apprehension':
+      this.category = 'fear';
+      break;
+    case 'Amazement':
+    case 'Surprise':
+    case 'Distraction':
+      this.category = 'surprise';
+      break;
+    case 'Sadness':
+    case 'Grief':
+    case 'Pensiveness':
+      this.category = 'sadness';
+      break;
+    case 'Loathing':
+    case 'Disgust':
+    case 'Boredom':
+      this.category = 'disgust';
+      break;
+    case 'Rage':
+    case 'Anger':
+    case 'Annoyance':
+      this.category = 'anger';
+      break;
+    case 'Vigilance':
+    case 'Anticipation':
+    case 'Interest':
+      this.category = 'anticipation';
+      break;
+  }
+};
 
-	vector.y = Math.min(vector.y, 2*this.max_climb);
+Bird.prototype.init_mesh = function(position, orientation) {
+  //var geometry = new BirdObject();
+  var geometry = new THREE.SphereGeometry(3,32,32);
+  var material =  new THREE.MeshBasicMaterial( { color:Math.random() * 0xffffff, side: THREE.DoubleSide } );
+  //geometry.dynamic = true;
+  var mesh = new THREE.Mesh(geometry, material);
+  mesh.phase = Math.floor( Math.random() * 62.83 );
+
+  //var rot_mat = new THREE.Matrix4();
+  // rot_mat.setRotationFromEuler(new THREE.Vector3(0, 0, -Math.PI/2));//rotate on X 90 degrees
+  // geometry.applyMatrix(rot_mat);
+
+  // mesh.scale = 1;
+  mesh.scale = new THREE.Vector3(0.1, 0.1, 0.1);
+  mesh.position = position;
+  mesh.rotation = orientation;
+  this.mesh = mesh;
+  this.scene.add(this.mesh);
+  this.octree.add(this.mesh);
+
+  // Draws line to center of mass
+  var line_material = new THREE.LineBasicMaterial({
+    color: 0x999999
+  });
+  var line_geometry = new THREE.Geometry();
+  line_geometry.dynamic = true;
+  line_geometry.vertices.push(new THREE.Vector3(0, 0, 0));
+  line_geometry.vertices.push(new THREE.Vector3(0, 0, 0));
+
+  this.line = new THREE.Line(line_geometry, line_material);
+  this.scene.add(this.line);
+
+  // Draws spheres around each bird
+  var sphere_material = new THREE.MeshBasicMaterial({
+      color: 0xaaaaaa,
+      wireframe: true
+  });
+
+  var sphere_geometry = new THREE.SphereGeometry(3, 8, 8);
+
+  this.sphere = new THREE.Mesh(sphere_geometry, sphere_material);
+
+  // this.scene.add(this.sphere);
+};
+
+// What limit is this referring to?
+// if bird is at limit away from center?
+// I think it's the limit of the bounding box
+// Which in this case noramlizes given vector and mutliplies it by a scalar
+Bird.prototype.apply_limit = function(vector, min, max) {
+    if (vector.length() > max) {
+	    vector.normalize();
+	    vector.multiplyScalar(max);
+    }
+    
+    if (vector.length() < min) {
+	    vector.normalize();
+	    vector.multiplyScalar(min);
+    }
+
+    vector.y = Math.min(vector.y, 2*this.max_climb);
 };
 
 Bird.prototype.update_forces = function() {
-	var v1, v2, v3;
+    var v1, v2, v3;
 
-	v1 = this.cohesion();
-	v2 = this.separation();
-	v3 = this.alignment();
-	v4 = this.bound();
-	v5 = this.center();
+    v1 = this.cohesion();
+    v2 = this.separation();
+    v3 = this.alignment();
+    v4 = this.bound();
+    v5 = this.center();
 
-	this.apply_force(v1);
-	this.apply_force(v2);
-	this.apply_force(v3);
-	this.apply_force(v4);
+    this.apply_force(v1);
+    this.apply_force(v2);
+    this.apply_force(v3);
+    this.apply_force(v4);
 };
 
 Bird.prototype.cohesion = function() {
@@ -156,34 +212,36 @@ Bird.prototype.alignment = function() {
 	return v3.divideScalar(15/this.alignment_gain);
 };
 
+// Boundary?
 Bird.prototype.bound = function() {
 	var v4 = new THREE.Vector3(0, 0, 0);
-	var bounding_force = .05*this.bound_strength;
+	var bounding_force = 0.05*this.bound_strength;
+	var diff;
 	if (this.mesh.position.x > this.area_size) {
-		var diff = Math.abs(this.mesh.position.x - this.area_size);
+		diff = Math.abs(this.mesh.position.x - this.area_size);
 		v4.x = -bounding_force*diff;
 	}
 	if (this.mesh.position.x < -this.area_size) {
-		var diff = Math.abs(this.mesh.position.x - this.area_size);
+		diff = Math.abs(this.mesh.position.x - this.area_size);
 		v4.x = bounding_force*diff;
 	}
 
 	if (this.mesh.position.y > this.area_size) {
-		var diff = Math.abs(this.mesh.position.z - this.area_size);
-		v4.y = -.5*diff;
+		diff = Math.abs(this.mesh.position.z - this.area_size);
+		v4.y = -0.5*diff;
 	}
 
 	if (this.mesh.position.y < 0) {
-		var diff = Math.abs(this.mesh.position.z - this.area_size);
+		diff = Math.abs(this.mesh.position.z - this.area_size);
 		v4.y = diff;
 	}
 
 	if (this.mesh.position.z > this.area_size*2) {
-		var diff = Math.abs(this.mesh.position.z - this.area_size);
+		diff = Math.abs(this.mesh.position.z - this.area_size);
 		v4.z = -bounding_force*diff;
 	}
 	if (this.mesh.position.z < -this.area_size) {
-		var diff = Math.abs(this.mesh.position.z - this.area_size);
+		diff = Math.abs(this.mesh.position.z - this.area_size);
 		v4.z = bounding_force*diff;
 	}
 
@@ -193,7 +251,7 @@ Bird.prototype.bound = function() {
 
 Bird.prototype.center = function() {
 	var v5 = new THREE.Vector3(0, 0, 0);
-	var center_force = .1;
+	var center_force = 0.1;
 
 
 };
@@ -220,11 +278,11 @@ Bird.prototype.update_position = function(elapsed_time, lookAt) {
 	displacement.copy(this.velocity);
 	displacement.multiplyScalar(elapsed_time/1000);
 
-	if (elapsed_time/1000 < .5) {
+	if (elapsed_time/1000 < 0.5) {
 		this.mesh.position.add(displacement);
 	}
 
-	this.mesh.rotation.z = this.velocity.y*.1;
+	this.mesh.rotation.z = this.velocity.y*0.1;
 	var new_y_rot = Math.atan2(-this.velocity.z, this.velocity.x);
 	var y_rot_diff = new_y_rot - this.mesh.rotation.y;
 	this.mesh.rotation.y = new_y_rot;
@@ -232,7 +290,7 @@ Bird.prototype.update_position = function(elapsed_time, lookAt) {
 
 	this.mesh.rotation.x = y_rot_diff;
 
-	this.mesh.phase = ( this.mesh.phase + ( Math.max( 0, this.velocity.y) + .1 )  ) % 62.83; 
+	this.mesh.phase = ( this.mesh.phase + ( Math.max( 0, this.velocity.y) + 0.1 )  ) % 62.83; 
 
 	// this.mesh.phase = (this.mesh.phase + .3) % 62.83;
 
