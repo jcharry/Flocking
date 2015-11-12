@@ -9,13 +9,14 @@ var Bird = function(scene, octree, obstacles, velocity_hash, position, orientati
   //this.line;
   //this.sphere;
   //this.mesh;
+  this.color = this.getColor();
   this.init_mesh(position, orientation);
   this.separation_size = 1;
   this.acceleration = new THREE.Vector3(0, 0, 0);
   this.min_speed = 4;
   this.max_speed = 10;
   this.max_delta = 0.01;
-  this.area_size = 5;
+  this.area_size = 50;
   this.velocity = new THREE.Vector3(this.min_speed*Math.cos(this.mesh.rotation.y), 0, this.min_speed*Math.sin(this.mesh.rotation.y));
 
   this.separation_gain = 1;
@@ -25,11 +26,9 @@ var Bird = function(scene, octree, obstacles, velocity_hash, position, orientati
   this.max_climb = 1;
 
   this.bound_strength = 1;
-  this.getCategory();
-  console.log(this.category);
 };
 
-Bird.prototype.getCategory = function() {
+Bird.prototype.getColor = function() {
   
   // set category
   switch (this.emotion) {
@@ -37,49 +36,50 @@ Bird.prototype.getCategory = function() {
     case 'Joy':
     case 'Ecstacy':
       this.category = 'joy';
-      break;
+      return new THREE.Color('rgb(255,255,0)');
     case 'Admiration':
     case 'Trust':
     case 'Acceptance':
       this.category = 'trust';
-      break;
+      return new THREE.Color('rgb(0,255,0)');
     case 'Terror':
     case 'Fear':
     case 'Apprehension':
       this.category = 'fear';
-      break;
+      return new THREE.Color('rgb(0,255,255)');
     case 'Amazement':
     case 'Surprise':
     case 'Distraction':
       this.category = 'surprise';
-      break;
+      return new THREE.Color('rgb(0,255,0)');
     case 'Sadness':
     case 'Grief':
     case 'Pensiveness':
       this.category = 'sadness';
-      break;
+      return new THREE.Color('rgb(40,0,255)');
     case 'Loathing':
     case 'Disgust':
     case 'Boredom':
       this.category = 'disgust';
-      break;
+      return new THREE.Color('rgb(150,150,150)');
     case 'Rage':
     case 'Anger':
     case 'Annoyance':
       this.category = 'anger';
-      break;
+      return new THREE.Color('rgb(255,0,0)');
     case 'Vigilance':
     case 'Anticipation':
     case 'Interest':
       this.category = 'anticipation';
-      break;
+      return new THREE.Color('rgb(255,100,100)');
   }
 };
 
 Bird.prototype.init_mesh = function(position, orientation) {
   //var geometry = new BirdObject();
-  var geometry = new THREE.SphereGeometry(3,32,32);
-  var material =  new THREE.MeshBasicMaterial( { color:Math.random() * 0xffffff, side: THREE.DoubleSide } );
+  //var geometry = new THREE.SphereGeometry(13,32,32);
+  var geometry = new THREE.TextGeometry(this.emotion, {size: 10, font: 'open sans', height: 3});
+  var material =  new THREE.MeshBasicMaterial( { color: this.color});//, side: THREE.DoubleSide } );
   //geometry.dynamic = true;
   var mesh = new THREE.Mesh(geometry, material);
   mesh.phase = Math.floor( Math.random() * 62.83 );
@@ -106,7 +106,7 @@ Bird.prototype.init_mesh = function(position, orientation) {
   line_geometry.vertices.push(new THREE.Vector3(0, 0, 0));
 
   this.line = new THREE.Line(line_geometry, line_material);
-  this.scene.add(this.line);
+  //this.scene.add(this.line);
 
   // Draws spheres around each bird
   var sphere_material = new THREE.MeshBasicMaterial({
@@ -161,11 +161,12 @@ Bird.prototype.cohesion = function() {
 	var search = this.octree.search(this.mesh.position, 10);
 
 	for (var i = 0; i < search.length; i++) {
-		if (search[i].object == this.mesh || this.mesh.position.angleTo(search[i].position) > Math.PI) continue;
+	  if (search[i].object == this.mesh || this.mesh.position.angleTo(search[i].position) > Math.PI) continue;
+	  var current_bird = search[i].object;
 
-		// console.log(this.mesh.position.angleTo(search[i].position)); 
-
-		v1.add(search[i].position);
+	  if (current_bird.material.color.r === this.color.r && current_bird.material.color.g === this.color.g && current_bird.material.color.b === this.color.b) {
+	    v1.add(search[i].position);
+	  }
 	}
 
 	v1.divideScalar(search.length);
@@ -182,12 +183,16 @@ Bird.prototype.separation = function() {
 	var search = this.octree.search(this.mesh.position, this.separation_size);
 
 	for (var i = 0; i < search.length; i++) {
-		if (search[i].object == this.mesh || this.mesh.position.angleTo(search[i].position) > Math.PI) continue;
+	  if (search[i].object == this.mesh || this.mesh.position.angleTo(search[i].position) > Math.PI) continue;
+	  var current_bird = search[i].object;
 
-		var offset = new THREE.Vector3(0, 0, 0);
-		offset.subVectors(search[i].object.position, this.mesh.position);
-		v2.sub(offset);
+	  if (current_bird.material.color.r === this.color.r && current_bird.material.color.g === this.color.g && current_bird.material.color.b === this.color.b) {
+	    var offset = new THREE.Vector3(0, 0, 0);
+	    offset.subVectors(search[i].object.position, this.mesh.position);
+	    v2.sub(offset);
+	  }
 	}
+
 	v2.divideScalar(300/this.separation_gain);
 	return v2;
 };
@@ -198,11 +203,15 @@ Bird.prototype.alignment = function() {
 	var search = this.octree.search(this.mesh.position, 5);
 
 	for (var i = 0; i < search.length; i++) {
-		if (search[i].object == this.mesh || this.mesh.position.angleTo(search[i].position) > Math.PI) continue;
+	  // If this bird matches itself, then skip this iteration.
+	  if (search[i].object == this.mesh || this.mesh.position.angleTo(search[i].position) > Math.PI) continue;
+	  var current_bird = search[i].object;
 
-		var current_bird = search[i].object;
-		var velocity = this.velocity_hash.get(current_bird);
-		v3 = v3.add(velocity);
+	  // Only add forces if colors match
+	  if (current_bird.material.color.r === this.color.r && current_bird.material.color.g === this.color.g && current_bird.material.color.b === this.color.b) {
+	    var velocity = this.velocity_hash.get(current_bird);
+	    v3 = v3.add(velocity);
+	  }
 	}
 
 	v3.divideScalar(search.length-1);

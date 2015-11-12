@@ -1,6 +1,7 @@
 //Based on http://www.kfish.org/boids/pseudocode.html
 
 var Flock = function(scene, octree, obstacles, flock) {
+  console.log(flock);
   this.flock = flock;
   //this.flock_size = flock.length;
   this.scene = scene;
@@ -12,6 +13,17 @@ var Flock = function(scene, octree, obstacles, flock) {
   this.birds = this.init_flock();
   this.update_center();
   this.time_step = 0;
+};
+
+Flock.prototype.addBird = function(node) {
+  this.flock.push(node);
+  var position = new THREE.Vector3((Math.random()-0.5)*10, (Math.random()-0.5)*10, (Math.random()-0.5)*10);
+  var orientation = new THREE.Vector3(0, Math.random()*2*Math.PI, 0);
+  var name = node.get('name');
+  var emotion = node.get('emotion');
+  var location = node.get('location');
+  var bird = new Bird(this.scene, this.octree, this.obstacles, this.velocity_hash, position, orientation, name, emotion, location);
+  this.birds.push(bird);
 };
 
 Flock.prototype.init_flock = function(data) {

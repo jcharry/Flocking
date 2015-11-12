@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 
 <html>
@@ -22,6 +23,11 @@
 	<script type="text/javascript" src="js/lib/stats.js"></script>
 	<script type="text/javascript" src="js/lib/dat.gui.min.js"></script>
 	<script type="text/javascript" src="js/lib/Detector.js"></script>
+	<script src='js/walkway.js'></script>
+	<script src='js/openSansRegular.js'></script>
+    <script src='https://ajax.googleapis.com/ajax/libs/jquery/2.1.4/jquery.min.js'></script>
+    <link rel="stylesheet" href="https://ajax.googleapis.com/ajax/libs/jqueryui/1.11.4/themes/smoothness/jquery-ui.css">
+    <script src="https://ajax.googleapis.com/ajax/libs/jqueryui/1.11.4/jquery-ui.min.js"></script> 
 
 
 
@@ -39,6 +45,63 @@
 </head>
 
 <body style="overflow:hidden;">
+  <div id='dialog' title='Add an node'>
+    <label class='label'>Name</label>
+    <input type='text' id='nameInput' class='input' placeholder='enter your name'>
+    <label class='label' id='emotionLabel'>How are you feeling right now?</label>
+    <select id='emotionSelector' class='input'>
+      <optgroup label='Joy'>
+	<option>Serenity</option>
+	<option selected='selected'>Joy</option>
+	<option>Ecstacy</option>
+      </optgroup>
+
+      <optgroup label='Trust'>
+	<option>Admiration</option> 
+	<option>Trust</option> 
+	<option>Acceptance</option> 
+      </optgroup>
+
+      <optgroup label='Fear'>
+	<option>Terror</option> 
+	<option>Fear</option> 
+	<option>Apprehension</option> 
+      </optgroup>
+
+      <optgroup label='Surprise'>
+	<option>Amazement</option> 
+	<option>Surprise</option> 
+	<option>Distraction</option> 
+      </optgroup>
+
+      <optgroup label='Sadness'>
+	<option>Grief</option> 
+	<option>Sadness</option> 
+	<option>Pensiveness</option> 
+      </optgroup>
+
+      <optgroup label='Disgust'>
+	<option>Loathing</option> 
+	<option>Disgust</option> 
+	<option>Boredom</option> 
+      </optgroup>
+
+      <optgroup label='Anger'>
+	<option>Rage</option> 
+	<option>Anger</option> 
+	<option>Annoyance</option> 
+      </optgroup>
+
+      <optgroup label='Anticipation'>
+	<option>Vigilance</option> 
+	<option>Anticipation</option> 
+	<option>Interest</option> 
+      </optgroup>
+      
+    </select>
+    <button id='cancelDialog' class='dialogButton'>Cancel</button>
+    <button id='submitNode' class='dialogButton'>Add node</button>
+    </div>
 </body>
 
 </html>
